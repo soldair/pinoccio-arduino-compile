@@ -77,6 +77,9 @@ if [ "$SKETCH" == "" ]; then
   SKETCH=${LIB_PINOCCIO}/examples/Bootstrap/Bootstrap.ino
 fi
 
+
+echo $SKETCH > $BUILDDIR/sketch.txt
+
 SKETCHDIR=$(dirname $SKETCH)
 
 VERSION_H=${LIB_PINOCCIO}/examples/Bootstrap/version.h
@@ -125,7 +128,8 @@ done
 
 cleanup() {
 	#rm -f "${PREF_FILE}"
-	cd ${LIB_PINOCCIO} && git checkout ${VERSION_H#${LIB_PINOCCIO}/}
+	#cd ${LIB_PINOCCIO} && git checkout ${VERSION_H#${LIB_PINOCCIO}/
+  echo "cleanup"
 }
 
 detect_version() {
@@ -167,6 +171,6 @@ echo "${ARDUINO} ${ACTION} ${ARDUINO_OPTIONS} ${SKETCH}"
 ${ARDUINO} ${ACTION} ${ARDUINO_OPTIONS} ${SKETCH}
 
 # Put the build result in the current directory
-cp ${BUILD_DIR}/Bootstrap.cpp.hex Bootstrap.hex
+cp $BUILD_DIR/`basename $SKETCHDIR`.cpp.hex  $BUILDDIR/`basename $SKETCHDIR`.hex
 
 echo "Done!"

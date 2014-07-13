@@ -1,4 +1,5 @@
 var cp = require('child_process');
+var through = require('through');
 
 // creates a hex file ready to flash on pinoccio scouts.
 
@@ -8,13 +9,18 @@ var path = require('path');
 var Xvfb = require('./xvfb');
 
 module.exports = function(ino,options,cb){
-  firmwareDir = options.firmware;
-  arduino = options.arduino||'arduino';
+  var firmwareDir = options.firmware;
+  var arduino = options.arduino||'arduino';
+  var display = options.display;
 
   if(!firmwareDir) {
     return setImmediate(function(){
       cb(new Error('firmware option required'));
     });
+  }
+
+  if(!display) {
+    display = ':0';
   }
 
 
@@ -23,17 +29,8 @@ module.exports = function(ino,options,cb){
   var build = options.buildDir||process.cwd();
   var buildDir = path.join(build,''+id);
   var inoName = path.basename(ino);
-
-  var xvfb = Xvfb(14);// todo list active displays choose next display.
-
-  var done = false;  
-
-  xvfb.on('exit',function(code){
-    if(!done) console.log("xvfb terminated early!",code)
-  })
-
-  var display = 14;
-
+  
+  var stream = through();
 
   var containedWith = path.basename(path.dirname(ino));
 
@@ -43,36 +40,58 @@ module.exports = function(ino,options,cb){
     });
   }
 
-
   fs.mkdir(buildDir,function(err){
-    if(err) return cb(err);
-
+    if(err && e.code != "EEXIST") return cb(err);
 
     var inoPath = ino;
-    console.log(inoPath);
-    console.log('setting cwd to ',buildDir);
+    stream.write("compiling ino "+inoPath+"\n");
+    stream.write('setting cwd to '+buildDir+"\n");
 
-    cp.execFile(buildsh,['-v'],{cwd:buildDir,env:{FIRMWARE:firmwareDir,ARDUINO:arduino,SKETCH:inoPath,DISPLAY:':0'}},function(err,stdout,stderr){
-      done = true;
+    var env = {FIRMWARE:firmwareDir,ARDUINO:arduino,SKETCH:inoPath,DISPLAY:display};
 
-      console.log('done!');
+    var args = [];
+    if(options.verbose) {
+      args.push('-v');// this dumps the all of send recv data from avrdude on upload.
+    }
 
-      xvfb.kill();
+    if(options.upload){
+      args.push('--upload');
+      env.PORT = options.port||options.upload;
+    }
 
+    stream.write("build args \""+args.join(' ')+'"\n');
 
-      cb(err,stdout,stderr);
+    var proc = cp.execFile(buildsh,args,{cwd:buildDir,env:env});
+
+    var timer;
+
+    proc.on('exit',function(err,stdout,stderr){
+
+      clearTimeout(timer);
+      
+      stream.end();
+
+      var hexPath = path.join(buildDir,containedWith+'.hex');
+  
+      fs.exists(hexPath,function(exists){
+        cb(err,{id:id,hex:exists?hexPath:false,stdout:stdout,stderr:stderr});
+      });
 
     });
 
+    proc.stdout.pipe(stream);
+    proc.stderr.pipe(stream);
+
+    timer = setTimeout(function(){
+      stream.write("[ERROR] compile process took too long! force killing.\n");
+      proc.kill("SIGTERM");
+    },40000+(options.upload?30000:0));
+
   });
-  // make build dir
-  // copy sketch to build dir
-  
+
+  return stream;
 }
 
-function copyino(){
-
-}
 
 
 
