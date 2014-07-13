@@ -26,7 +26,7 @@ module.exports = function(ino,options,cb){
 
   var buildsh = __dirname+"/build.sh"
   var id = Date.now();
-  var build = options.buildDir||process.cwd();
+  var build = options.dir||process.cwd();
   var buildDir = path.join(build,''+id);
   var inoName = path.basename(ino);
   
@@ -65,7 +65,7 @@ module.exports = function(ino,options,cb){
 
     var timer;
 
-    proc.on('exit',function(err,stdout,stderr){
+    proc.on('exit',function(err){
 
       clearTimeout(timer);
       
@@ -74,7 +74,7 @@ module.exports = function(ino,options,cb){
       var hexPath = path.join(buildDir,containedWith+'.hex');
   
       fs.exists(hexPath,function(exists){
-        cb(err,{id:id,hex:exists?hexPath:false,stdout:stdout,stderr:stderr});
+        cb(err,{id:id,hex:exists?hexPath:false});
       });
 
     });
