@@ -1,7 +1,7 @@
 {
   "name": "pinoccio-arduino-compile",
   "description": "compiling and uploading sketches for pinccio using the arduino ide from the command line",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "repository": {
     "url": "git://github.com/soldair/pinoccio-arduino-compile.git"
   },

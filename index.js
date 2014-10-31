@@ -112,7 +112,7 @@ module.exports.upload = function(hex,options,cb){
     })
   }
 
-  var args =  ["-patmega256rfr2", "-cwiring", "-P/dev/ttyACM0", "-b115200", "-D"];
+  var args =  ["-patmega256rfr2", "-cwiring", "-P"+port, "-b115200", "-D"];
 
   if(config) args.push("-C"+config);
   if(!verify) args.push("-V");
