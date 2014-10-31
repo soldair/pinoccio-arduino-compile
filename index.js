@@ -92,7 +92,71 @@ module.exports = function(ino,options,cb){
   return stream;
 }
 
+// already have a hex? upload it!
+// 
+module.exports.upload = function(hex,options,cb){
+  var avrdude = options.avrdude||'avrdude';
+  var config = options.config;
+  var port = options.port;
+  var verify = options.verify;
+  var verbose = options.verbose;
+  var noTimeout = options.noTimeout;
+  var noBuffer = options.noBuffer;
+  // /home/soldair/arduino_party/arduino-1.5.7/hardware/tools/avr/bin/avrdude -C/home/soldair/arduino_party/arduino-1.5.7/hardware/tools/avr/etc/avrdude.conf -q -q -patmega256rfr2 -cwiring -P/dev/ttyACM0 -b115200 -D -Uflash:w:/home/soldair/test/Bootstrap.hex
 
+  var timer;
+
+  if(!port) {
+    return process.nextTick(function(){
+      cb("no serial port specified pass option \"port\"")
+    })
+  }
+
+  var args =  ["-patmega256rfr2", "-cwiring", "-P/dev/ttyACM0", "-b115200", "-D"];
+
+  if(config) args.push("-C"+config);
+  if(!verify) args.push("-V");
+  if(verbose) args.push("-v","-v");
+  else args.push("-q","-q");
+
+  args.push("-Uflash:w:"+hex);
+
+  var stream = through();
+
+  console.log(avrdude,args);
+
+  var proc = cp.spawn(avrdude,args);
+
+  proc.on('exit',function(code){
+    clearTimeout(timer);  
+    stream.end();
+    
+    cb(code,output);
+ 
+  });
+
+  var output = false;
+  if(!noBuffer){
+    output = "";
+    stream.on('data',function(data){
+      output += data;
+    })
+  }
+
+  proc.stdout.pipe(stream);
+  proc.stderr.pipe(stream);
+
+  if(!noTimeout){
+    timer = setTimeout(function(){
+      stream.write("[ERROR] upload process took too long! force killing.\n");
+      proc.kill("SIGTERM");
+    },70000);
+
+    timer.unref();
+  }
+  return stream;
+ 
+}
 
 
 

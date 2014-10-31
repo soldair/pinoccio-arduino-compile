@@ -1,7 +1,7 @@
 {
   "name": "pinoccio-arduino-compile",
-  "description": "compiling sketches for pinccio using the arduino ide from the command line",
-  "version": "0.0.1",
+  "description": "compiling and uploading sketches for pinccio using the arduino ide from the command line",
+  "version": "0.0.2",
   "repository": {
     "url": "git://github.com/soldair/pinoccio-arduino-compile.git"
   },
@@ -11,7 +11,7 @@
   },
   "author": "Ryan Day",
   "dependencies": {
-    "through": "^2.3.4"
+    "through": "~2.3.4"
   },
   "devDependencies": {
     "tape": "~2.3.2"
