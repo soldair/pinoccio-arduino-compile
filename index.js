@@ -154,6 +154,9 @@ module.exports.upload = function(hex,options,cb){
 
     timer.unref();
   }
+
+  stream.proc = proc;
+
   return stream;
  
 }
